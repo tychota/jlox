@@ -55,3 +55,64 @@ var a = "global";
 //   var a = "first";
 //   var a = "second";
 // }
+
+print "-------------";
+
+class DevonshireCream {
+  serveOn() {
+    return "Scones";
+  }
+}
+
+print DevonshireCream; // Prints "DevonshireCream".
+
+
+class Bagel {}
+var bagel = Bagel();
+print bagel; // Prints "Bagel instance".
+
+
+print "-------------";
+
+class Bacon {
+  eat() {
+    print "Crunch crunch crunch!";
+  }
+}
+
+Bacon().eat(); // Prints "Crunch crunch crunch!".
+
+// class Object {
+//     method() {
+//         print "called function method with " + argument;
+//     }
+// }
+// 
+// var object = Object();
+// var m = object.method;
+// m(argument);
+// 
+// class Box {}
+// 
+// fun notMethod(argument) {
+//   print "called function notMethod with " + argument;
+// }
+// 
+// var box = Box();
+// box.function = notMethod;
+// box.function("argument");
+// 
+// class Person {
+//   sayName() {
+//     print this.name;
+//   }
+// }
+// 
+// var jane = Person();
+// jane.name = "Jane";
+// 
+// var bill = Person();
+// bill.name = "Bill";
+// 
+// bill.sayName = jane.sayName;
+// bill.sayName(); // ?

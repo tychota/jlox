@@ -1,8 +1,11 @@
 package com.craftinginterpreters.lox
 
 import com.craftinginterpreters.lox.TokenType.*
-import java.util.ArrayList
+import java.util.*
 import java.util.HashMap
+
+
+
 
 internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     private val globals = Environment()
@@ -115,7 +118,12 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitGetExpr(expr: Expr.Get): Any? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val obj = evaluate(expr.obj)
+        if (obj is LoxInstance) {
+            return obj[expr.name]
+        }
+
+        throw RuntimeError(expr.name, "Only instances have properties.")
     }
 
     override fun visitGroupingExpr(expr: Expr.Grouping): Any? {
@@ -139,7 +147,12 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitSetExpr(expr: Expr.Set): Any? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val obj = evaluate(expr.obj) as? LoxInstance
+                ?: throw RuntimeError(expr.name, "Only instances have fields.")
+
+        val value = evaluate(expr.value)
+        obj[expr.name] = value
+        return value
     }
 
     override fun visitSuperExpr(expr: Expr.Super): Any? {
@@ -182,7 +195,17 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitClassStmt(stmt: Stmt.Class) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        environment.define(stmt.name.lexeme, null)
+
+        val methods = HashMap<String, LoxFunction>()
+        for (method in stmt.methods) {
+            val function = LoxFunction(method, environment)
+            methods[method.name.lexeme] = function
+        }
+
+        val klass = LoxClass(stmt.name.lexeme, methods)
+
+        environment.assign(stmt.name, klass)
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {

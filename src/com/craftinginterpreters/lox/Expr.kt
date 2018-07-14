@@ -36,7 +36,7 @@ internal abstract class Expr {
         }
     }
 
-    internal class Get(val `object`: Expr, val name: Token) : Expr() {
+    internal class Get(val obj: Expr, val name: Token) : Expr() {
         override fun <R> accept(visitor: Visitor<R>): R {
             return visitor.visitGetExpr(this)
         }
@@ -60,7 +60,7 @@ internal abstract class Expr {
         }
     }
 
-    internal class Set(val `object`: Expr, val name: Token, val value: Expr) : Expr() {
+    internal class Set(val obj: Expr, val name: Token, val value: Expr) : Expr() {
         override fun <R> accept(visitor: Visitor<R>): R {
             return visitor.visitSetExpr(this)
         }

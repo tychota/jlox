@@ -3,10 +3,6 @@ package com.craftinginterpreters.lox
 import com.craftinginterpreters.lox.TokenType.*
 import java.util.Arrays
 import java.util.ArrayList
-import java.time.temporal.TemporalAdjusters.previous
-
-
-
 
 
 internal class Parser(private val tokens: List<Token>) {
@@ -26,6 +22,7 @@ internal class Parser(private val tokens: List<Token>) {
     private fun declaration(): Stmt? {
         return try {
             when {
+                match(CLASS) -> classDeclaration()
                 match(FUN) -> function("function")
                 match(VAR) -> varDeclaration()
                 else -> statement()
@@ -35,6 +32,21 @@ internal class Parser(private val tokens: List<Token>) {
             synchronize()
             null
         }
+    }
+
+
+    private fun classDeclaration(): Stmt {
+        val name = consume(IDENTIFIER, "Expect class name.")
+        consume(LEFT_BRACE, "Expect '{' before class body.")
+
+        val methods = ArrayList<Stmt.Function>()
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            methods.add(function("method"))
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after class body.")
+
+        return Stmt.Class(name, null, methods)
     }
 
     private fun statement(): Stmt {
@@ -177,12 +189,14 @@ internal class Parser(private val tokens: List<Token>) {
             val equals = previous()
             val value = assignment()
 
-            if (expr is Expr.Variable) {
-                val name = expr.name
-                return Expr.Assign(name, value)
+            when (expr) {
+                is Expr.Variable -> {
+                    val name = expr.name
+                    return Expr.Assign(name, value)
+                }
+                is Expr.Get -> return Expr.Set(expr.obj, expr.name, value)
+                else -> error(equals, "Invalid assignment target.")
             }
-
-            error(equals, "Invalid assignment target.")
         }
 
         return expr
@@ -276,6 +290,10 @@ internal class Parser(private val tokens: List<Token>) {
         loop@ while (true) {
             when {
                 match(LEFT_PAREN) -> expr = finishCall(expr)
+                match(DOT) -> {
+                    val name = consume(IDENTIFIER, "Expect property name after '.'.")
+                    expr = Expr.Get(expr, name)
+                }
                 else -> break@loop
             }
         }

@@ -4,14 +4,14 @@ package com.craftinginterpreters.lox
 import java.util.*
 
 
-
 internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.Visitor<Unit> {
     private val scopes = Stack<HashMap<String, Boolean>>()
     private var currentFunction = FunctionType.NONE
 
     private enum class FunctionType {
         NONE,
-        FUNCTION
+        FUNCTION,
+        METHOD
     }
 
     override fun visitAssignExpr(expr: Expr.Assign) {
@@ -33,7 +33,7 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
     }
 
     override fun visitGetExpr(expr: Expr.Get) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        resolve(expr.obj)
     }
 
     override fun visitGroupingExpr(expr: Expr.Grouping) {
@@ -48,7 +48,8 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
     }
 
     override fun visitSetExpr(expr: Expr.Set) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        resolve(expr.value)
+        resolve(expr.obj)
     }
 
     override fun visitSuperExpr(expr: Expr.Super) {
@@ -78,7 +79,14 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
     }
 
     override fun visitClassStmt(stmt: Stmt.Class) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        declare(stmt.name)
+
+        for (method in stmt.methods) {
+            val declaration = FunctionType.METHOD
+            resolveFunction(method, declaration)
+        }
+
+        define(stmt.name)
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {
