@@ -2,6 +2,9 @@ package com.craftinginterpreters.lox
 
 import com.craftinginterpreters.lox.TokenType.*
 import java.util.Arrays
+import java.util.ArrayList
+import java.time.temporal.TemporalAdjusters.previous
+
 
 
 
@@ -22,7 +25,11 @@ internal class Parser(private val tokens: List<Token>) {
 
     private fun declaration(): Stmt? {
         return try {
-            if (match(VAR)) varDeclaration() else statement()
+            when {
+                match(FUN) -> function("function")
+                match(VAR) -> varDeclaration()
+                else -> statement()
+            }
 
         } catch (error: ParseError) {
             synchronize()
@@ -35,6 +42,7 @@ internal class Parser(private val tokens: List<Token>) {
             match(FOR) -> forStatement()
             match(IF) -> ifStatement()
             match(PRINT) -> printStatement()
+            match(RETURN) -> returnStatement()
             match(WHILE) -> whileStatement()
             match(LEFT_BRACE) -> Stmt.Block(block())
             else -> expressionStatement()
@@ -87,6 +95,17 @@ internal class Parser(private val tokens: List<Token>) {
         return Stmt.Print(value)
     }
 
+    private fun returnStatement(): Stmt {
+        val keyword = previous()
+        var value: Expr? = null
+        if (!check(SEMICOLON)) {
+            value = expression()
+        }
+
+        consume(SEMICOLON, "Expect ';' after return value.")
+        return Stmt.Return(keyword, value)
+    }
+
     private fun varDeclaration(): Stmt {
         val name = consume(IDENTIFIER, "Expect variable name.")
 
@@ -112,6 +131,28 @@ internal class Parser(private val tokens: List<Token>) {
         val expr = expression()
         consume(SEMICOLON, "Expect ';' after expression.")
         return Stmt.Expression(expr)
+    }
+
+    private fun function(kind: String): Stmt.Function {
+        val name = consume(IDENTIFIER, "Expect $kind name.")
+
+        consume(LEFT_PAREN, "Expect '(' after $kind name.")
+        val parameters = ArrayList<Token>()
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size >= 8) {
+                    error(peek(), "Cannot have more than 8 parameters.")
+                }
+
+                parameters.add(consume(IDENTIFIER, "Expect parameter name."))
+            } while (match(COMMA))
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters.")
+
+        consume(LEFT_BRACE, "Expect '{' before $kind body.")
+        val body = block()
+
+        return Stmt.Function(name, parameters, body)
     }
 
     private fun block(): List<Stmt?> {
@@ -226,9 +267,37 @@ internal class Parser(private val tokens: List<Token>) {
             return Expr.Unary(operator, right)
         }
 
-        return primary()
+        return call()
     }
 
+    private fun call(): Expr {
+        var expr = primary()
+
+        loop@ while (true) {
+            when {
+                match(LEFT_PAREN) -> expr = finishCall(expr)
+                else -> break@loop
+            }
+        }
+
+        return expr
+    }
+
+    private fun finishCall(callee: Expr): Expr {
+        val arguments = ArrayList<Expr>()
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (arguments.size >= 8) {
+                    error(peek(), "Cannot have more than 8 arguments.")
+                }
+                arguments.add(expression())
+            } while (match(COMMA))
+        }
+
+        val paren = consume(RIGHT_PAREN, "Expect ')' after arguments.")
+
+        return Expr.Call(callee, paren, arguments)
+    }
 
     private fun primary(): Expr {
         if (match(FALSE)) return Expr.Literal(false)

@@ -32,7 +32,7 @@ internal abstract class Stmt {
         }
     }
 
-    internal class Function(val name: Token, val parameters: List<Token>, val body: List<Stmt>) : Stmt() {
+    internal class Function(val name: Token, val parameters: List<Token>, val body: List<Stmt?>) : Stmt() {
         override fun <R> accept(visitor: Visitor<R>): R {
             return visitor.visitFunctionStmt(this)
         }
@@ -50,7 +50,7 @@ internal abstract class Stmt {
         }
     }
 
-    internal class Return(val keyword: Token, val value: Expr) : Stmt() {
+    internal class Return(val keyword: Token, val value: Expr?) : Stmt() {
         override fun <R> accept(visitor: Visitor<R>): R {
             return visitor.visitReturnStmt(this)
         }

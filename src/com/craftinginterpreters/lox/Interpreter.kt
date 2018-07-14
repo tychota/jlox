@@ -1,9 +1,27 @@
 package com.craftinginterpreters.lox
 
 import com.craftinginterpreters.lox.TokenType.*
+import java.util.ArrayList
 
 internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
-    private var environment = Environment()
+    val globals = Environment()
+    private var environment = globals
+
+    init {
+        globals.define("clock", object : LoxCallable {
+            override fun arity(): Int {
+                return 0
+            }
+
+            override fun call(interpreter: Interpreter, arguments: List<Any?>): Any {
+                return System.currentTimeMillis().toDouble() / 1000.0
+            }
+
+            override fun toString(): String {
+                return "<native fn>"
+            }
+        })
+    }
 
     fun interpret(statements: List<Stmt?>) {
         try {
@@ -69,7 +87,22 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitCallExpr(expr: Expr.Call): Any? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val callee = evaluate(expr.callee)
+
+        val arguments = ArrayList<Any?>()
+        for (argument in expr.arguments) {
+            arguments.add(evaluate(argument))
+        }
+
+        if (callee !is LoxCallable) {
+            throw RuntimeError(expr.paren, "Can only call functions and classes.")
+        }
+
+        if (arguments.size != callee.arity()) {
+            throw RuntimeError(expr.paren, "Expected ${callee.arity()} arguments but got ${arguments.size}.")
+        }
+
+        return callee.call(this, arguments)
     }
 
     override fun visitGetExpr(expr: Expr.Get): Any? {
@@ -139,7 +172,8 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitFunctionStmt(stmt: Stmt.Function) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val function = LoxFunction(stmt)
+        environment.define(stmt.name.lexeme, function)
     }
 
     override fun visitIfStmt(stmt: Stmt.If) {
@@ -156,7 +190,10 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitReturnStmt(stmt: Stmt.Return) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        var value: Any? = null
+        if (stmt.value != null) value = evaluate(stmt.value)
+
+        throw Return(value)
     }
 
     override fun visitVarStmt(stmt: Stmt.Var) {
@@ -178,7 +215,7 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         stmt?.accept(this)
     }
 
-    private fun executeBlock(statements: List<Stmt?>, environment: Environment) {
+    fun executeBlock(statements: List<Stmt?>, environment: Environment) {
         val previous = this.environment
         try {
             this.environment = environment
