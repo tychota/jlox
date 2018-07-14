@@ -1,6 +1,7 @@
 package com.craftinginterpreters.lox
 
-internal class Token(val type: TokenType, val lexeme: String, val literal: Any, val line: Int) {
+@Suppress("MemberVisibilityCanBePrivate")
+internal class Token(val type: TokenType, val lexeme: String, val literal: Any?, val line: Int) {
 
     override fun toString(): String {
         return type.toString() + " " + lexeme + " " + literal

@@ -45,13 +45,13 @@ object Lox {
     }
 
     private fun run(source: String) {
-        /*val scanner = Scanner(source)
+        val scanner = Scanner(source)
         val tokens = scanner.scanTokens()
 
         // For now, just print the tokens.
         for (token in tokens) {
             System.out.println(token)
-        }*/
+        }
     }
 
     fun error(line: Int, message: String) {
