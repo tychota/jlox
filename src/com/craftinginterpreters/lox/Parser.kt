@@ -3,6 +3,12 @@ package com.craftinginterpreters.lox
 import com.craftinginterpreters.lox.TokenType.*
 import java.util.Arrays
 import java.util.ArrayList
+import java.time.temporal.TemporalAdjusters.previous
+import java.time.temporal.TemporalAdjusters.previous
+
+
+
+
 
 
 internal class Parser(private val tokens: List<Token>) {
@@ -37,6 +43,13 @@ internal class Parser(private val tokens: List<Token>) {
 
     private fun classDeclaration(): Stmt {
         val name = consume(IDENTIFIER, "Expect class name.")
+
+        var superclass: Expr.Variable? = null
+        if (match(LESS)) {
+            consume(IDENTIFIER, "Expect superclass name.")
+            superclass = Expr.Variable(previous())
+        }
+
         consume(LEFT_BRACE, "Expect '{' before class body.")
 
         val methods = ArrayList<Stmt.Function>()
@@ -46,7 +59,7 @@ internal class Parser(private val tokens: List<Token>) {
 
         consume(RIGHT_BRACE, "Expect '}' after class body.")
 
-        return Stmt.Class(name, null, methods)
+        return Stmt.Class(name, superclass, methods)
     }
 
     private fun statement(): Stmt {
@@ -323,6 +336,12 @@ internal class Parser(private val tokens: List<Token>) {
             match(TRUE) -> Expr.Literal(true)
             match(NIL) -> Expr.Literal(null)
             match(NUMBER, STRING) -> Expr.Literal(previous().literal)
+            match(SUPER) -> {
+                val keyword = previous()
+                consume(DOT, "Expect '.' after 'super'.")
+                val method = consume(IDENTIFIER, "Expect superclass method name.")
+                return Expr.Super(keyword, method)
+            }
             match(THIS) -> Expr.This(previous())
             match(IDENTIFIER) -> Expr.Variable(previous())
             match(LEFT_PAREN) -> {

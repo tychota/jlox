@@ -2,7 +2,7 @@ package com.craftinginterpreters.lox
 
 import java.util.*
 
-internal class Environment(private val enclosing: Environment? = null) {
+internal class Environment(val enclosing: Environment? = null) {
     private val values = HashMap<String, Any?>()
 
     fun define(name: String, value: Any?) {

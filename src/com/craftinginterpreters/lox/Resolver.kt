@@ -16,7 +16,8 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
 
     private enum class ClassType {
         NONE,
-        CLASS
+        CLASS,
+        SUBCLASS
     }
 
     override fun visitAssignExpr(expr: Expr.Assign) {
@@ -58,7 +59,12 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
     }
 
     override fun visitSuperExpr(expr: Expr.Super) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        when {
+            currentClass == ClassType.NONE -> Lox.error(expr.keyword, "Cannot use 'super' outside of a class.")
+            currentClass != ClassType.SUBCLASS -> Lox.error(expr.keyword, "Cannot use 'super' in a class with no superclass.")
+            else -> resolveLocal(expr, expr.keyword)
+        }
+
     }
 
     override fun visitThisExpr(expr: Expr.This) {
@@ -93,7 +99,17 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
 
         declare(stmt.name)
 
+        if (stmt.superclass != null) {
+            currentClass = ClassType.SUBCLASS
+            resolve(stmt.superclass)
+        }
+
         define(stmt.name)
+
+        if (stmt.superclass != null) {
+            beginScope()
+            scopes.peek()["super"] = true
+        }
 
         beginScope()
         scopes.peek()["this"] = true
@@ -104,6 +120,9 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
         }
 
         endScope()
+
+        if (stmt.superclass != null) endScope()
+
         currentClass = enclosingClass
     }
 

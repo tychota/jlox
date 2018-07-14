@@ -1,3 +1,7 @@
+print 2 * (3 / - 25.6);
+
+print "-------------";
+
 fun makeCounter() {
   var i = 0;
   fun count() {
@@ -104,43 +108,33 @@ var cake = Cake();
 cake.flavor = "German chocolate";
 cake.taste(); // Prints "The German chocolate cake is delicious!".
 
-class Foo {
-  init() {
-    return;
+
+print "-------------";
+
+class Doughnut {
+  cook() {
+    print "Fry until golden brown.";
   }
 }
 
-// class Object {
-//     method() {
-//         print "called function method with " + argument;
-//     }
-// }
-//
-// var object = Object();
-// var m = object.method;
-// m(argument);
-// 
-// class Box {}
-// 
-// fun notMethod(argument) {
-//   print "called function notMethod with " + argument;
-// }
-// 
-// var box = Box();
-// box.function = notMethod;
-// box.function("argument");
-// 
-// class Person {
-//   sayName() {
-//     print this.name;
-//   }
-// }
-// 
-// var jane = Person();
-// jane.name = "Jane";
-// 
-// var bill = Person();
-// bill.name = "Bill";
-// 
-// bill.sayName = jane.sayName;
-// bill.sayName(); // ?
+class BostonCream < Doughnut {}
+
+BostonCream().cook();
+
+print "-------------";
+
+class Doughnut {
+  cook() {
+    print "Fry until golden brown.";
+  }
+}
+
+class BostonCream < Doughnut {
+  cook() {
+    super.cook();
+    print "Pipe full of custard and coat with chocolate.";
+  }
+}
+
+Doughnut().cook();
+BostonCream().cook();

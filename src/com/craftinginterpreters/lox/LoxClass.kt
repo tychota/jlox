@@ -1,6 +1,6 @@
 package com.craftinginterpreters.lox
 
-internal class LoxClass(val name: String, private val methods : Map<String, LoxFunction>): LoxCallable {
+internal class LoxClass(val name: String, private val superclass: LoxClass?, private val methods : Map<String, LoxFunction>): LoxCallable {
     override fun arity(): Int {
         val initializer = methods["init"] ?: return 0
         return initializer.arity()
@@ -22,6 +22,8 @@ internal class LoxClass(val name: String, private val methods : Map<String, LoxF
     fun findMethod(instance: LoxInstance, name: String): LoxFunction? {
         return if (methods.containsKey(name)) {
             methods[name]!!.bind(instance)
-        } else null
+        } else {
+            superclass?.findMethod(instance, name)
+        }
     }
 }

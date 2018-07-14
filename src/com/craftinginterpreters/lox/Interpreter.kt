@@ -4,6 +4,7 @@ import com.craftinginterpreters.lox.TokenType.*
 import java.util.*
 import java.util.HashMap
 
+
 internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     private val globals = Environment()
     private var environment = globals
@@ -153,7 +154,13 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitSuperExpr(expr: Expr.Super): Any? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val distance = locals[expr]!!
+
+        val superclass = environment.getAt(distance, "super") as LoxClass
+        val obj = environment.getAt(distance - 1, "this") as LoxInstance
+
+        return superclass.findMethod(obj, expr.method.lexeme)
+                ?: throw RuntimeError(expr.method, "Undefined property '${expr.method.lexeme}'.")
     }
 
     override fun visitThisExpr(expr: Expr.This): Any? {
@@ -192,7 +199,17 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitClassStmt(stmt: Stmt.Class) {
+        var superclass: LoxClass? = null
+        if (stmt.superclass != null) {
+            superclass = evaluate(stmt.superclass) as? LoxClass?
+                ?: throw RuntimeError(stmt.superclass.name, "Superclass must be a class.")
+        }
         environment.define(stmt.name.lexeme, null)
+
+        if (stmt.superclass != null) {
+            environment = Environment(environment)
+            environment.define("super", superclass)
+        }
 
         val methods = HashMap<String, LoxFunction>()
         for (method in stmt.methods) {
@@ -200,7 +217,11 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
             methods[method.name.lexeme] = function
         }
 
-        val klass = LoxClass(stmt.name.lexeme, methods)
+        val klass = LoxClass(stmt.name.lexeme, superclass, methods)
+
+        if (superclass != null) {
+            environment = environment.enclosing!!
+        }
 
         environment.assign(stmt.name, klass)
     }
