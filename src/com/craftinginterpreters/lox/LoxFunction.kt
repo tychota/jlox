@@ -1,12 +1,12 @@
 package com.craftinginterpreters.lox
 
-internal class LoxFunction(private val declaration: Stmt.Function) : LoxCallable {
+internal class LoxFunction(private val declaration: Stmt.Function, private val closure: Environment) : LoxCallable {
     override fun arity(): Int {
         return declaration.parameters.size
     }
 
     override fun call(interpreter: Interpreter, arguments: List<Any?>): Any? {
-        val environment = Environment(interpreter.globals)
+        val environment = Environment(closure)
         for (i in 0 until declaration.parameters.size) {
             environment.define(declaration.parameters[i].lexeme, arguments[i])
         }
