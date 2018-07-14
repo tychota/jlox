@@ -2,6 +2,10 @@ package com.craftinginterpreters.lox
 
 // Creates an unambiguous, if ugly, string representation of AST nodes.
 internal class AstPrinter : Expr.Visitor<String> {
+    fun print(expr: Expr): String {
+        return expr.accept(this)
+    }
+
     override fun visitAssignExpr(expr: Expr.Assign): String {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -61,9 +65,5 @@ internal class AstPrinter : Expr.Visitor<String> {
         builder.append(")")
 
         return builder.toString()
-    }
-
-    fun print(expr: Expr): String {
-        return expr.accept(this)
     }
 }

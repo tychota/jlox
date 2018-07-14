@@ -5,7 +5,6 @@ import com.craftinginterpreters.lox.TokenType.*
 
 internal class Parser(private val tokens: List<Token>) {
     private class ParseError : RuntimeException()
-
     private var current = 0
 
     fun parse(): Expr? {

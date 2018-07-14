@@ -9,7 +9,10 @@ import java.nio.file.Paths
 
 
 object Lox {
-    private var hadError: Boolean = false
+    private var hadError= false
+    private var hadRuntimeError = false
+
+    private val interpreter = Interpreter()
 
     @Throws(IOException::class)
     @JvmStatic
@@ -30,6 +33,7 @@ object Lox {
         run(String(bytes, Charset.defaultCharset()))
 
         if (hadError) System.exit(65)
+        if (hadRuntimeError) System.exit(70)
     }
 
     @Throws(IOException::class)
@@ -52,10 +56,9 @@ object Lox {
         val expression = parser.parse()
 
         // Stop if there was a syntax error.
-        if (hadError) return
-        if (expression == null) return
+        if (hadError || expression == null) return
 
-        println(AstPrinter().print(expression))
+        interpreter.interpret(expression)
     }
 
     fun error(line: Int, message: String) {
@@ -66,8 +69,13 @@ object Lox {
         if (token.type === TokenType.EOF) {
             report(token.line, " at end", message)
         } else {
-            report(token.line, " at '" + token.lexeme + "'", message)
+            report(token.line, " at '${token.lexeme}'", message)
         }
+    }
+
+    fun runtimeError(error: RuntimeError) {
+        System.err.println("${error.message}\n[line ${error.token.line}]")
+        hadRuntimeError = true
     }
 
     private fun report(line: Int, where: String, message: String) {
