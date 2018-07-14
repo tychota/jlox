@@ -27,3 +27,31 @@ fun makePoint(x, y) {
 var point = makePoint(2, 3);
 print point("x"); // "2".
 print point("y"); // "3".
+
+print "-------------";
+
+var a = "outer";
+{
+  var a = "inner";
+  print a;
+}
+
+print "-------------";
+
+var a = "global";
+{
+  fun showA() {
+    print a;
+  }
+
+  showA();
+  var a = "block";
+  showA();
+}
+
+// print "-------------";
+
+// fun bad() {
+//   var a = "first";
+//   var a = "second";
+// }
