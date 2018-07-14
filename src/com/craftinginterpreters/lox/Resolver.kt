@@ -7,11 +7,18 @@ import java.util.*
 internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.Visitor<Unit> {
     private val scopes = Stack<HashMap<String, Boolean>>()
     private var currentFunction = FunctionType.NONE
+    private var currentClass = ClassType.NONE
 
     private enum class FunctionType {
         NONE,
         FUNCTION,
+        INITIALIZER,
         METHOD
+    }
+
+    private enum class ClassType {
+        NONE,
+        CLASS
     }
 
     override fun visitAssignExpr(expr: Expr.Assign) {
@@ -57,7 +64,11 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
     }
 
     override fun visitThisExpr(expr: Expr.This) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.keyword, "Cannot use 'this' outside of a class.")
+        }
+
+        resolveLocal(expr, expr.keyword)
     }
 
     override fun visitUnaryExpr(expr: Expr.Unary) {
@@ -66,7 +77,7 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
 
     override fun visitVariableExpr(expr: Expr.Variable) {
         if (!scopes.isEmpty() && scopes.peek()[expr.name.lexeme] == false) {
-            Lox.error(expr.name, "Cannot read local variable in its own initializer.");
+            Lox.error(expr.name, "Cannot read local variable in its own initializer.")
         }
 
         resolveLocal(expr, expr.name)
@@ -79,14 +90,23 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
     }
 
     override fun visitClassStmt(stmt: Stmt.Class) {
+        val enclosingClass = currentClass
+        currentClass = ClassType.CLASS
+
         declare(stmt.name)
 
+        define(stmt.name)
+
+        beginScope()
+        scopes.peek()["this"] = true
+
         for (method in stmt.methods) {
-            val declaration = FunctionType.METHOD
+            val declaration = if (method.name.lexeme == "init") FunctionType.INITIALIZER else FunctionType.METHOD
             resolveFunction(method, declaration)
         }
 
-        define(stmt.name)
+        endScope()
+        currentClass = enclosingClass
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {
@@ -112,7 +132,10 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
 
     override fun visitReturnStmt(stmt: Stmt.Return) {
         if (currentFunction == FunctionType.NONE) {
-            Lox.error(stmt.keyword, "Cannot return from top-level code.");
+            Lox.error(stmt.keyword, "Cannot return from top-level code.")
+        }
+        if (currentFunction == FunctionType.INITIALIZER && stmt.value != null) {
+            Lox.error(stmt.keyword, "Cannot return a value from an initializer.")
         }
         resolve(stmt.value)
     }
@@ -153,7 +176,7 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
         // Not found. Assume it is global.
     }
 
-    private fun resolveFunction(function: Stmt.Function, type: FunctionType ) {
+    private fun resolveFunction(function: Stmt.Function, type: FunctionType) {
         val enclosingFunction = currentFunction
         currentFunction = type
 
@@ -181,7 +204,7 @@ internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Uni
         val scope = scopes.peek()
 
         if (scope.containsKey(name.lexeme)) {
-            Lox.error(name, "Variable with this name already declared in this scope.");
+            Lox.error(name, "Variable with this name already declared in this scope.")
         }
 
         scope[name.lexeme] = false

@@ -288,11 +288,11 @@ internal class Parser(private val tokens: List<Token>) {
         var expr = primary()
 
         loop@ while (true) {
-            when {
-                match(LEFT_PAREN) -> expr = finishCall(expr)
+            expr = when {
+                match(LEFT_PAREN) -> finishCall(expr)
                 match(DOT) -> {
                     val name = consume(IDENTIFIER, "Expect property name after '.'.")
-                    expr = Expr.Get(expr, name)
+                    Expr.Get(expr, name)
                 }
                 else -> break@loop
             }
@@ -318,25 +318,20 @@ internal class Parser(private val tokens: List<Token>) {
     }
 
     private fun primary(): Expr {
-        if (match(FALSE)) return Expr.Literal(false)
-        if (match(TRUE)) return Expr.Literal(true)
-        if (match(NIL)) return Expr.Literal(null)
-
-        if (match(NUMBER, STRING)) {
-            return Expr.Literal(previous().literal)
+        return when {
+            match(FALSE) -> Expr.Literal(false)
+            match(TRUE) -> Expr.Literal(true)
+            match(NIL) -> Expr.Literal(null)
+            match(NUMBER, STRING) -> Expr.Literal(previous().literal)
+            match(THIS) -> Expr.This(previous())
+            match(IDENTIFIER) -> Expr.Variable(previous())
+            match(LEFT_PAREN) -> {
+                val expr = expression()
+                consume(RIGHT_PAREN, "Expect ')' after expression.")
+                Expr.Grouping(expr)
+            }
+            else -> throw error(peek(), "Expect expression.")
         }
-
-        if (match(IDENTIFIER)) {
-            return Expr.Variable(previous())
-        }
-
-        if (match(LEFT_PAREN)) {
-            val expr = expression()
-            consume(RIGHT_PAREN, "Expect ')' after expression.")
-            return Expr.Grouping(expr)
-        }
-
-        throw error(peek(), "Expect expression.")
     }
 
     private fun match(vararg types: TokenType): Boolean {

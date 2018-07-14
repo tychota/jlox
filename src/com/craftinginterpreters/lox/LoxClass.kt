@@ -1,13 +1,19 @@
 package com.craftinginterpreters.lox
 
 
-internal class LoxClass(val name: String, val methods : Map<String, LoxFunction>): LoxCallable {
+internal class LoxClass(val name: String, private val methods : Map<String, LoxFunction>): LoxCallable {
     override fun arity(): Int {
-        return 0
+        val initializer = methods["init"] ?: return 0
+        return initializer.arity()
     }
 
     override fun call(interpreter: Interpreter, arguments: List<Any?>): Any? {
-        return LoxInstance(this)
+        val instance = LoxInstance(this)
+
+        val initializer = methods["init"]
+        initializer?.bind(instance)?.call(interpreter, arguments)
+
+        return instance
     }
 
     override fun toString(): String {
@@ -16,8 +22,7 @@ internal class LoxClass(val name: String, val methods : Map<String, LoxFunction>
 
     fun findMethod(instance: LoxInstance, name: String): LoxFunction? {
         return if (methods.containsKey(name)) {
-            methods[name]
+            methods[name]!!.bind(instance)
         } else null
-
     }
 }

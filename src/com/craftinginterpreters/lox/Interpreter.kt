@@ -160,7 +160,7 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitThisExpr(expr: Expr.This): Any? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return lookUpVariable(expr.keyword, expr)
     }
 
     override fun visitUnaryExpr(expr: Expr.Unary): Any? {
@@ -199,7 +199,7 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
         val methods = HashMap<String, LoxFunction>()
         for (method in stmt.methods) {
-            val function = LoxFunction(method, environment)
+            val function = LoxFunction(method, environment, method.name.lexeme == "init")
             methods[method.name.lexeme] = function
         }
 
@@ -213,7 +213,7 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitFunctionStmt(stmt: Stmt.Function) {
-        val function = LoxFunction(stmt, environment)
+        val function = LoxFunction(stmt, environment,false)
         environment.define(stmt.name.lexeme, function)
     }
 
