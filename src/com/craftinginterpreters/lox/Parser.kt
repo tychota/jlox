@@ -1,22 +1,103 @@
 package com.craftinginterpreters.lox
 
 import com.craftinginterpreters.lox.TokenType.*
+import java.util.ArrayList
+import java.time.temporal.TemporalAdjusters.previous
+
+
+
+
+
+
+
 
 
 internal class Parser(private val tokens: List<Token>) {
     private class ParseError : RuntimeException()
     private var current = 0
 
-    fun parse(): Expr? {
+    fun parse(): List<Stmt?> {
+        val statements = ArrayList<Stmt?>()
+        while (!isAtEnd()) {
+            statements.add(declaration())
+        }
+
+        return statements
+    }
+
+    private fun declaration(): Stmt? {
         return try {
-            expression()
+            if (match(VAR)) varDeclaration() else statement()
+
         } catch (error: ParseError) {
+            synchronize()
             null
         }
     }
 
+    private fun statement(): Stmt {
+        return when {
+            match(PRINT) -> printStatement()
+            match(LEFT_BRACE) -> Stmt.Block(block())
+            else -> expressionStatement()
+        }
+    }
+
+    private fun printStatement(): Stmt {
+        val value = expression()
+        consume(SEMICOLON, "Expect ';' after value.")
+        return Stmt.Print(value)
+    }
+
+    private fun varDeclaration(): Stmt {
+        val name = consume(IDENTIFIER, "Expect variable name.")
+
+        var initializer: Expr? = null
+        if (match(EQUAL)) {
+            initializer = expression()
+        }
+
+        consume(SEMICOLON, "Expect ';' after variable declaration.")
+        return Stmt.Var(name, initializer)
+    }
+
+    private fun expressionStatement(): Stmt {
+        val expr = expression()
+        consume(SEMICOLON, "Expect ';' after expression.")
+        return Stmt.Expression(expr)
+    }
+
+    private fun block(): List<Stmt?> {
+        val statements = ArrayList<Stmt?>()
+
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            statements.add(declaration())
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after block.")
+        return statements
+    }
+
     private fun expression(): Expr {
-        return equality()
+        return assignment()
+    }
+
+    private fun assignment(): Expr {
+        val expr = equality()
+
+        if (match(EQUAL)) {
+            val equals = previous()
+            val value = assignment()
+
+            if (expr is Expr.Variable) {
+                val name = expr.name
+                return Expr.Assign(name, value)
+            }
+
+            error(equals, "Invalid assignment target.")
+        }
+
+        return expr
     }
 
     private fun equality(): Expr {
@@ -87,6 +168,10 @@ internal class Parser(private val tokens: List<Token>) {
             return Expr.Literal(previous().literal)
         }
 
+        if (match(IDENTIFIER)) {
+            return Expr.Variable(previous())
+        }
+
         if (match(LEFT_PAREN)) {
             val expr = expression()
             consume(RIGHT_PAREN, "Expect ')' after expression.")
@@ -126,9 +211,8 @@ internal class Parser(private val tokens: List<Token>) {
 
             when (peek().type) {
                 CLASS, FUN, VAR, FOR, IF, WHILE, PRINT, RETURN -> return
+                else -> advance()
             }
-
-            advance()
         }
     }
 

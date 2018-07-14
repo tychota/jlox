@@ -14,7 +14,7 @@ internal abstract class Stmt {
         fun visitWhileStmt(stmt: While): R
     }
 
-    internal class Block(val statements: List<Stmt>) : Stmt() {
+    internal class Block(val statements: List<Stmt?>) : Stmt() {
         override fun <R> accept(visitor: Visitor<R>): R {
             return visitor.visitBlockStmt(this)
         }
@@ -56,7 +56,7 @@ internal abstract class Stmt {
         }
     }
 
-    internal class Var(val name: Token, val initializer: Expr) : Stmt() {
+    internal class Var(val name: Token, val initializer: Expr?) : Stmt() {
         override fun <R> accept(visitor: Visitor<R>): R {
             return visitor.visitVarStmt(this)
         }

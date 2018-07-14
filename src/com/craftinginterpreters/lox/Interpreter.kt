@@ -2,22 +2,24 @@ package com.craftinginterpreters.lox
 
 import com.craftinginterpreters.lox.TokenType.*
 
+internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
+    private var environment = Environment()
 
-
-
-internal class Interpreter : Expr.Visitor<Any?> {
-    fun interpret(expression: Expr) {
+    fun interpret(statements: List<Stmt?>) {
         try {
-            val value = evaluate(expression)
-            println(stringify(value))
+            for (statement in statements) {
+                execute(statement)
+            }
         } catch (error: RuntimeError) {
             Lox.runtimeError(error)
         }
-
     }
 
     override fun visitAssignExpr(expr: Expr.Assign): Any? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val value = evaluate(expr.value)
+
+        environment.assign(expr.name, value)
+        return value
     }
 
     override fun visitBinaryExpr(expr: Expr.Binary): Any? {
@@ -113,7 +115,66 @@ internal class Interpreter : Expr.Visitor<Any?> {
     }
 
     override fun visitVariableExpr(expr: Expr.Variable): Any? {
+        return environment[expr.name]
+    }
+
+    override fun visitBlockStmt(stmt: Stmt.Block) {
+        executeBlock(stmt.statements, Environment(environment))
+    }
+
+    override fun visitClassStmt(stmt: Stmt.Class) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun visitExpressionStmt(stmt: Stmt.Expression) {
+        evaluate(stmt.expression)
+    }
+
+    override fun visitFunctionStmt(stmt: Stmt.Function) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun visitIfStmt(stmt: Stmt.If) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun visitPrintStmt(stmt: Stmt.Print) {
+        val value = evaluate(stmt.expression)
+        println(stringify(value))
+    }
+
+    override fun visitReturnStmt(stmt: Stmt.Return) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun visitVarStmt(stmt: Stmt.Var) {
+        var value: Any? = null
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer)
+        }
+
+        environment.define(stmt.name.lexeme, value)
+    }
+
+    override fun visitWhileStmt(stmt: Stmt.While) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    private fun execute(stmt: Stmt?) {
+        stmt?.accept(this)
+    }
+
+    private fun executeBlock(statements: List<Stmt?>, environment: Environment) {
+        val previous = this.environment
+        try {
+            this.environment = environment
+
+            for (statement in statements) {
+                execute(statement)
+            }
+        } finally {
+            this.environment = previous
+        }
     }
 
     private fun evaluate(expr: Expr): Any? {
@@ -141,18 +202,18 @@ internal class Interpreter : Expr.Visitor<Any?> {
         throw RuntimeError(operator, "Operands must be numbers.")
     }
 
-    private fun stringify(`object`: Any?): String {
-        if (`object` == null) return "nil"
+    private fun stringify(obj: Any?): String {
+        if (obj == null) return "nil"
 
         // Hack. Work around Java adding ".0" to integer-valued doubles.
-        if (`object` is Double) {
-            var text = `object`.toString()
+        if (obj is Double) {
+            var text = obj.toString()
             if (text.endsWith(".0")) {
                 text = text.substring(0, text.length - 2)
             }
             return text
         }
 
-        return `object`.toString()
+        return obj.toString()
     }
 }
