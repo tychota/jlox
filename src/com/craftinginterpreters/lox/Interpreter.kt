@@ -85,7 +85,15 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitLogicalExpr(expr: Expr.Logical): Any? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val left = evaluate(expr.left)
+
+        if (expr.operator.type === TokenType.OR) {
+            if (isTruthy(left)) return left
+        } else {
+            if (!isTruthy(left)) return left
+        }
+
+        return evaluate(expr.right)
     }
 
     override fun visitSetExpr(expr: Expr.Set): Any? {
@@ -135,7 +143,11 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitIfStmt(stmt: Stmt.If) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        if (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch)
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch)
+        }
     }
 
     override fun visitPrintStmt(stmt: Stmt.Print) {
@@ -157,7 +169,9 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitWhileStmt(stmt: Stmt.While) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        while (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.body)
+        }
     }
 
     private fun execute(stmt: Stmt?) {
