@@ -9,7 +9,7 @@ import java.nio.file.Paths
 
 
 object Lox {
-    private var hadError= false
+    private var hadError = false
     private var hadRuntimeError = false
 
     private val interpreter = Interpreter()
