@@ -1,6 +1,5 @@
 package com.craftinginterpreters.lox
 
-
 import java.util.*
 
 internal class Environment(private val enclosing: Environment? = null) {

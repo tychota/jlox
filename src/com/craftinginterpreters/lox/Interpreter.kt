@@ -4,9 +4,6 @@ import com.craftinginterpreters.lox.TokenType.*
 import java.util.*
 import java.util.HashMap
 
-
-
-
 internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     private val globals = Environment()
     private var environment = globals

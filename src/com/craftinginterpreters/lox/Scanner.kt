@@ -3,7 +3,6 @@ package com.craftinginterpreters.lox
 import com.craftinginterpreters.lox.TokenType.*
 import java.util.*
 
-
 internal class Scanner(private val source: String) {
     private val tokens = ArrayList<Token>()
 

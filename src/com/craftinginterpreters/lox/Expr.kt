@@ -1,6 +1,5 @@
 package com.craftinginterpreters.lox
 
-
 @Suppress("unused")
 internal abstract class Expr {
     internal interface Visitor<R> {

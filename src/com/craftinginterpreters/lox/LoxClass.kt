@@ -1,6 +1,5 @@
 package com.craftinginterpreters.lox
 
-
 internal class LoxClass(val name: String, private val methods : Map<String, LoxFunction>): LoxCallable {
     override fun arity(): Int {
         val initializer = methods["init"] ?: return 0

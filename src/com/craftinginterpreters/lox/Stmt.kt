@@ -1,6 +1,5 @@
 package com.craftinginterpreters.lox
 
-@Suppress("unused")
 internal abstract class Stmt {
     internal interface Visitor<R> {
         fun visitBlockStmt(stmt: Block): R

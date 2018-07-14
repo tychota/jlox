@@ -1,8 +1,6 @@
 package com.craftinginterpreters.lox
 
-
 import java.util.*
-
 
 internal class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.Visitor<Unit> {
     private val scopes = Stack<HashMap<String, Boolean>>()
