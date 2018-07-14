@@ -2,8 +2,6 @@ package com.craftinginterpreters.lox
 
 import com.craftinginterpreters.lox.TokenType.*
 import java.util.*
-import java.util.HashMap
-
 
 internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     private val globals = Environment()
@@ -202,7 +200,7 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         var superclass: LoxClass? = null
         if (stmt.superclass != null) {
             superclass = evaluate(stmt.superclass) as? LoxClass?
-                ?: throw RuntimeError(stmt.superclass.name, "Superclass must be a class.")
+                    ?: throw RuntimeError(stmt.superclass.name, "Superclass must be a class.")
         }
         environment.define(stmt.name.lexeme, null)
 
@@ -231,7 +229,7 @@ internal class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitFunctionStmt(stmt: Stmt.Function) {
-        val function = LoxFunction(stmt, environment,false)
+        val function = LoxFunction(stmt, environment, false)
         environment.define(stmt.name.lexeme, function)
     }
 

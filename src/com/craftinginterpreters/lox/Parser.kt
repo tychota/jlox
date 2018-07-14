@@ -1,15 +1,7 @@
 package com.craftinginterpreters.lox
 
 import com.craftinginterpreters.lox.TokenType.*
-import java.util.Arrays
-import java.util.ArrayList
-import java.time.temporal.TemporalAdjusters.previous
-import java.time.temporal.TemporalAdjusters.previous
-
-
-
-
-
+import java.util.*
 
 internal class Parser(private val tokens: List<Token>) {
     private class ParseError : RuntimeException()

@@ -1,6 +1,6 @@
 package com.craftinginterpreters.lox
 
-import java.util.HashMap
+import java.util.*
 
 internal class LoxInstance(private val klass: LoxClass) {
     private val fields = HashMap<String, Any?>()
