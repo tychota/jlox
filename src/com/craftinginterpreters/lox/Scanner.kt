@@ -1,8 +1,7 @@
 package com.craftinginterpreters.lox
 
-import java.util.ArrayList
-
 import com.craftinginterpreters.lox.TokenType.*
+import java.util.*
 
 
 internal class Scanner(private val source: String) {

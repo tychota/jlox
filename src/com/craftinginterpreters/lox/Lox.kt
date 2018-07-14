@@ -1,11 +1,11 @@
 package com.craftinginterpreters.lox
 
-import java.io.IOException
-import java.nio.charset.Charset
-import java.nio.file.Paths
-import java.nio.file.Files
 import java.io.BufferedReader
+import java.io.IOException
 import java.io.InputStreamReader
+import java.nio.charset.Charset
+import java.nio.file.Files
+import java.nio.file.Paths
 
 
 object Lox {
@@ -48,14 +48,26 @@ object Lox {
         val scanner = Scanner(source)
         val tokens = scanner.scanTokens()
 
-        // For now, just print the tokens.
-        for (token in tokens) {
-            System.out.println(token)
-        }
+        val parser = Parser(tokens)
+        val expression = parser.parse()
+
+        // Stop if there was a syntax error.
+        if (hadError) return
+        if (expression == null) return
+
+        println(AstPrinter().print(expression))
     }
 
     fun error(line: Int, message: String) {
         report(line, "", message)
+    }
+
+    fun error(token: Token, message: String) {
+        if (token.type === TokenType.EOF) {
+            report(token.line, " at end", message)
+        } else {
+            report(token.line, " at '" + token.lexeme + "'", message)
+        }
     }
 
     private fun report(line: Int, where: String, message: String) {
